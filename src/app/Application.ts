@@ -37,6 +37,7 @@ import * as path from 'path';
 import { allow } from 'permissions';
 import * as semver from 'semver';
 import * as uuidT from 'uuid';
+import { backupPath, deleteBackups, getListOfBackups } from '../util/stateBackup';
 
 const uuid = lazyRequire<typeof uuidT>(() => require('uuid'));
 
@@ -530,19 +531,7 @@ class Application {
 
   private createStore(restoreBackup?: string): Promise<void> {
     const newStore = createVortexStore(this.sanityCheckCB);
-    const backupPath = path.join(app.getPath('temp'), 'state_backups');
     let backups: string[];
-
-    const updateBackups = () => fs.ensureDirAsync(backupPath)
-      .then(() => fs.readdirAsync(backupPath))
-      .filter((fileName: string) =>
-        fileName.startsWith('backup') && path.extname(fileName) === '.json')
-      .then(backupsIn => { backups = backupsIn; });
-
-    const deleteBackups = () => Promise.map(backups, backupName =>
-          fs.removeAsync(path.join(backupPath, backupName))
-            .catch(() => undefined))
-          .then(() => null);
 
     // 1. load only user settings to determine if we're in multi-user mode
     // 2. load app settings to determine which extensions to load
@@ -613,19 +602,27 @@ class Application {
                        }) :
                    Promise.resolve();
       })
-      .then(() => updateBackups())
+      .then(() => getListOfBackups())
+      .then(backupsIn => {
+        backups = backupsIn;
+      })
       .then(() => {
         if (restoreBackup !== undefined) {
           log('info', 'restoring state backup', restoreBackup);
           return fs.readFileAsync(restoreBackup, { encoding: 'utf-8' })
-            .then(backupState => {
+            .then((backupState: string) => {
               newStore.dispatch({
                 type: '__hydrate',
                 payload: JSON.parse(backupState),
               });
             })
-            .then(() => deleteBackups())
-            .then(() => updateBackups())
+            .then(() => {
+              deleteBackups(backups);
+            })
+            .then(() => getListOfBackups())
+            .then(backupsIn => {
+              backups = backupsIn;
+            })
             .catch(err => {
               if (err instanceof UserCanceled) {
                 return Promise.reject(err);
@@ -657,11 +654,11 @@ class Application {
               { title: 'Restore', action: () => {
                 const sorted = backups.sort((lhs, rhs) => rhs.localeCompare(lhs));
                 log('info', 'sorted backups', sorted);
-                spawnSelf(['--restore', path.join(backupPath, sorted[0])]);
+                spawnSelf(['--restore', path.join(backupPath(), sorted[0])]);
                 app.exit();
               } },
               { title: 'Delete', action: dismiss => {
-                deleteBackups();
+                deleteBackups(backups);
                 dismiss();
               } },
             ],

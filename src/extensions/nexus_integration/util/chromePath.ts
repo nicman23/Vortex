@@ -19,7 +19,7 @@ function chromePath(): Promise<string> {
       ? path.join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'User Data')
       : path.resolve(appPath, '..', 'Local', 'Google', 'Chrome', 'User Data');
     return fs.readFileAsync(path.join(userData, 'Local State'), { encoding: 'utf-8' })
-      .then(state => {
+      .then((state: string) => {
         try {
           const dat = JSON.parse(deBOM(state));
           const prof = truthy(dat) && truthy(dat.profile) && truthy(dat.profile.last_used)

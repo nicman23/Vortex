@@ -56,7 +56,7 @@ function writeFileAtomicImpl(filePath: string, input: string | Buffer, attempts:
       .then(() => fs.closeAsync(fd));
   })
   .then(() => fs.readFileAsync(tmpPath))
-  .then(data => (checksum(data) !== hash)
+  .then((data: Buffer) => (checksum(data) !== hash)
       ? attempts > 0
         // retry
         ? writeFileAtomicImpl(filePath, input, attempts - 1)

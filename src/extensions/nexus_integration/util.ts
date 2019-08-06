@@ -512,15 +512,15 @@ export function checkModVersionsImpl(
             }
 
             if (detail.message === undefined) {
-              return undefined;
+              return Promise.resolve(undefined);
             }
 
             const name = modName(mod, { version: true });
             const nameLink = `[url=${nexusLink(store.getState(), mod, gameId)}]${name}[/url]`;
 
-            return (detail.Servermessage !== undefined)
+            return Promise.resolve((detail.Servermessage !== undefined)
               ? `${nameLink}:<br/>${detail.message}<br/>Server said: "${detail.Servermessage}"<br/>`
-              : `${nameLink}:<br/>${detail.message}`;
+              : `${nameLink}:<br/>${detail.message}`);
           })
           .finally(() => {
             progress();

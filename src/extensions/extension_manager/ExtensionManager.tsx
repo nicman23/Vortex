@@ -67,7 +67,7 @@ function readExtensionInfo(extensionPath: string,
                            bundled: boolean): Promise<{ id: string, info: IExtension }> {
   const id = path.basename(extensionPath);
   return fs.readFileAsync(path.join(extensionPath, 'info.json'), { encoding: 'utf-8' })
-    .then(info => ({
+    .then((info: string) => ({
       id, info: applyExtensionInfo(id, bundled, JSON.parse(info)),
     }))
     .catch(err => ({

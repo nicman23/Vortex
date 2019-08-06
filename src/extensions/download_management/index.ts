@@ -60,7 +60,7 @@ const archiveExtLookup = new Set<string>([
 
 function validateDownloadsTag(api: IExtensionApi, tagPath: string): Promise<void> {
   return fs.readFileAsync(tagPath, { encoding: 'utf8' })
-    .then(data => {
+    .then((data: string) => {
       const state: IState = api.store.getState();
       const tag = JSON.parse(data);
       if (tag.instance !== state.app.instanceId) {

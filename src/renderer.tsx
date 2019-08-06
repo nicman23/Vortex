@@ -51,6 +51,9 @@ if (SetProcessPreferredUILanguages !== undefined) {
   SetProcessPreferredUILanguages(['en-US']);
 }
 
+import * as Promise from 'bluebird';
+global.Promise = Promise;
+
 import getVortexPath from './util/getVortexPath';
 
 import * as path from 'path';
@@ -72,7 +75,6 @@ import './util/monkeyPatching';
 import { reduxSanity, StateError } from './util/reduxSanity';
 import MainWindow from './views/MainWindow';
 
-import * as Promise from 'bluebird';
 import { ipcRenderer, remote, webFrame } from 'electron';
 import { forwardToMain, getInitialStateRenderer, replayActionRenderer } from 'electron-redux';
 import { EventEmitter } from 'events';

@@ -31,7 +31,6 @@ function refreshMods(api: IExtensionApi, installPath: string, knownMods: string[
       const removedMods =
           knownMods.filter((name: string) => filtered.indexOf(name) === -1);
 
-  
       if ((addedMods.length === 0) && (removedMods.length === 0)) {
         return Promise.resolve();
       }
@@ -52,8 +51,8 @@ function refreshMods(api: IExtensionApi, installPath: string, knownMods: string[
             + 'appeared in the staging folder since the last time it checked.<br/>'
             + 'It is highly discouraged to modify the staging folder outside Vortex in any '
             + 'way!<br/>'
-            + 'If you continue now, Vortex will lose all meta information about the deleted '
-            + 'mods [b]irreversibly[/b] and the added mods are added with minimal meta information.',
+            + 'If you continue now, Vortex will lose all meta information about the deleted mods '
+            + '[b]irreversibly[/b] and the added mods are added with minimal meta information.',
         message: message.join('\n'),
       }, [
         { label: 'Quit Vortex' },
@@ -84,13 +83,14 @@ function refreshMods(api: IExtensionApi, installPath: string, knownMods: string[
                   // mods database so it wouldn't get cleaned up eiather
                   api.showDialog('error', modName, {
                     text: 'This mod was not installed completely, most likely the installation '
-                        + 'got interrupted before. You should delete it now and then install it again.'
+                        + 'got interrupted before. You should delete it now and then install '
+                        + 'it again.',
                   }, [
                     { label: 'Ignore' },
                     { label: 'Delete' },
                   ])
-                  .then(res => {
-                    if (res.action === 'Delete') {
+                  .then(dialogRes => {
+                    if (dialogRes.action === 'Delete') {
                       return fs.removeAsync(fullPath + '.installing');
                     }
                   })));

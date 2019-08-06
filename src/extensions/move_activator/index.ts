@@ -239,7 +239,7 @@ class DeploymentMethod extends LinkingDeployment {
 
   protected isLink(linkPath: string, sourcePath: string): Promise<boolean> {
     return fs.readFileAsync(sourcePath + LNK_EXT, { encoding: 'utf-8' })
-      .then(data => {
+      .then((data: string) => {
         try {
           return JSON.parse(data).target === linkPath;
         } catch (err) {
@@ -269,7 +269,7 @@ class DeploymentMethod extends LinkingDeployment {
 
   private readLink(filePath: string): Promise<ILinkData> {
     return fs.readFileAsync(filePath + LNK_EXT, { encoding: 'utf-8' })
-      .then(data => {
+      .then((data: string) => {
         try {
           const obj: ILinkData = JSON.parse(data);
           if (obj.target === undefined) {
@@ -311,7 +311,7 @@ class DeploymentMethod extends LinkingDeployment {
 
   private restoreLink(linkPath: string): Promise<void> {
     return fs.readFileAsync(linkPath, { encoding: 'utf-8' })
-      .then(data => {
+      .then((data: string) => {
         try {
           const dat = JSON.parse(data);
           const outPath = linkPath.replace(this.mLnkExpression, '');

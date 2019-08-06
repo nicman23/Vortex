@@ -54,7 +54,7 @@ function writeStagingTag(api: IExtensionApi, tagPath: string, gameId: string) {
 
 function validateStagingTag(api: IExtensionApi, tagPath: string): Promise<void> {
   return fs.readFileAsync(tagPath, { encoding: 'utf8' })
-    .then(data => {
+    .then((data: string) => {
       const state: IState = api.store.getState();
       const tag = JSON.parse(data);
       if (tag.instance !== state.app.instanceId) {
@@ -476,7 +476,7 @@ export function onRemoveMod(api: IExtensionApi,
         ])
           .then(result => {
             if (result.action === 'Deploy') {
-              return new Promise((resolve, reject) => {
+              return new Promise<void>((resolve, reject) => {
                 api.events.emit('deploy-mods', (deployErr) => {
                   if (deployErr !== null) {
                     return reject(deployErr);

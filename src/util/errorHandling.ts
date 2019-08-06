@@ -15,7 +15,7 @@ import {
   dialog as dialogIn,
   remote,
 } from 'electron';
-import * as fs from 'fs-extra-promise';
+import * as fs from 'fs-extra';
 import i18next from 'i18next';
 import NexusT, { IFeedbackResponse } from 'nexus-api';
 import * as os from 'os';
@@ -179,7 +179,7 @@ export function disableErrorReport() {
 }
 
 export function sendReportFile(fileName: string): Promise<IFeedbackResponse> {
-  return fs.readFileAsync(fileName)
+  return Promise.resolve(fs.readFile(fileName))
     .then(reportData => {
       const {type, error, labels, reporterId, reportProcess, sourceProcess, context} =
         JSON.parse(reportData.toString());

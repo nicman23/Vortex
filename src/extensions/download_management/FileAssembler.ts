@@ -3,7 +3,7 @@ import * as fs from '../../util/fs';
 
 import * as Promise from 'bluebird';
 import { dialog as dialogIn, remote } from 'electron';
-import * as fsFast from 'fs-extra-promise';
+import * as fsFast from 'fs-extra';
 import * as path from 'path';
 
 const dialog = remote !== undefined ? remote.dialog : dialogIn;
@@ -88,7 +88,7 @@ class FileAssembler {
             // writing at an offset beyond the file limit
             // works on windows and linux.
             // I'll assume it means it will work on MacOS too...
-            : fsFast.writeAsync(this.mFD, data, 0, data.length, offset))
+            : fsFast.write(this.mFD, data, 0, data.length, offset))
         .then((bytesWritten: any) => {
           this.mWritten += bytesWritten;
           const now = Date.now();

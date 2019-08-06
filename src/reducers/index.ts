@@ -10,8 +10,8 @@ import { IReducerSpec, IStateVerifier,
          VerifierDrop, VerifierDropParent } from '../types/IExtensionContext';
 import { UserCanceled } from '../util/api';
 import deepMerge from '../util/deepMerge';
-import * as fs from '../util/fs';
 import { log } from '../util/log';
+import { createStateBackupSync } from '../util/stateBackup';
 import { deleteOrNop, getSafe, rehydrate, setSafe } from '../util/storeHelper';
 
 import { appReducer } from './app';
@@ -131,7 +131,7 @@ export enum Decision {
   QUIT,
 }
 
-let backupTime: number;
+let backupId: string;
 
 function deriveReducer(statePath: string,
                        ele: any,
@@ -164,21 +164,7 @@ function deriveReducer(statePath: string,
               }
               const decision = querySanitize(errors);
               if (decision === Decision.SANITIZE) {
-                const backupPath = path.join(app.getPath('temp'), 'state_backups');
-                log('info', 'sanitizing application state');
-                let backupData;
-                if (backupTime !== undefined) {
-                  const oldBackup = fs.readFileSync(
-                    path.join(backupPath, `backup_${backupTime}.json`),
-                    { encoding: 'utf-8' });
-                  backupData = { ...JSON.parse(oldBackup), ...payload };
-                } else {
-                  backupData = payload;
-                  backupTime = Date.now();
-                }
-                fs.ensureDirSync(backupPath);
-                fs.writeFileSync(path.join(backupPath, `backup_${backupTime}.json`),
-                                 JSON.stringify(backupData, undefined, 2));
+                backupId = createStateBackupSync(backupId, payload);
                 payload = setSafe(payload, pathArray, sanitized);
               } else if (decision === Decision.QUIT) {
                 app.exit();

@@ -1,11 +1,11 @@
 import { log } from './log';
 
 import * as crypto from 'crypto';
-import * as fs from 'fs-extra-promise';
+import * as fs from 'fs-extra';
 import * as path from 'path';
 
 async function readHashList(basePath: string): Promise<{ [name: string]: string }> {
-  const data = await fs.readFileAsync(path.join(basePath, 'md5sums.csv'), { encoding: 'utf-8' });
+  const data = await fs.readFile(path.join(basePath, 'md5sums.csv'), { encoding: 'utf-8' });
   return data.split('\n')
     .reduce((prev, line) => {
       const [ key, hash ] = line.split(':');
@@ -16,7 +16,7 @@ async function readHashList(basePath: string): Promise<{ [name: string]: string 
 
 async function hashFile(fullPath: string): Promise<string> {
   const hash = crypto.createHash('md5');
-  const fileData: Buffer = await fs.readFileAsync(fullPath);
+  const fileData: Buffer = await fs.readFile(fullPath);
   const buf = hash
     .update(fileData)
     .digest();

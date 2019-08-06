@@ -5,6 +5,9 @@
 import * as sourceMapSupport from 'source-map-support';
 sourceMapSupport.install();
 
+import * as Bluebird from 'bluebird';
+global.Promise = Bluebird;
+
 import requireRemap from './util/requireRemap';
 requireRemap();
 
