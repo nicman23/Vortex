@@ -1,16 +1,5 @@
 import * as Promise from 'bluebird';
 
-import * as fs from './fs';
-import { log } from './log';
-import { getSafeCI } from './storeHelper';
-
-import { app as appIn, remote } from 'electron';
-import * as path from 'path';
-import { parse } from 'simple-vdf';
-import * as winapi from 'winapi-bindings';
-
-const app = (remote !== undefined) ? remote.app : appIn;
-
 export interface ISteamEntry {
   appid: string;
   name: string;
@@ -65,188 +54,17 @@ export interface ISteam {
   getGameExecutionInfo(gamePath: string, appId?: number, args?: string[]): Promise<ISteamExec>;
 }
 
-/**
- * base class to interact with local steam installation
- *
- * @class Steam
- */
-class Steam implements ISteam {
-  public static GameNotFound = GameNotFound;
-  private mBaseFolder: Promise<string>;
-  private mCache: Promise<ISteamEntry[]>;
-
-  constructor() {
-    if (process.platform === 'win32') {
-        // windows
-        try {
-          const steamPath =
-            winapi.RegGetValue('HKEY_CURRENT_USER', 'Software\\Valve\\Steam', 'SteamPath');
-          this.mBaseFolder = Promise.resolve(steamPath.value as string);
-        } catch (err) {
-          log('info', 'steam not found', { error: err.message });
-          this.mBaseFolder = Promise.resolve(undefined);
-        }
-    } else {
-      this.mBaseFolder = Promise.resolve(path.resolve(app.getPath('home'), '.steam', 'steam'));
-    }
-  }
-
-  /**
-   * find the first game that matches the specified name pattern
-   */
-  public findByName(namePattern: string): Promise<ISteamEntry> {
-    const re = new RegExp(namePattern);
-    return this.allGames()
-      .then(entries => entries.find(entry => re.test(entry.name)))
-      .then(entry => {
-        if (entry === undefined) {
-          return Promise.reject(new Steam.GameNotFound(namePattern));
-        } else {
-          return Promise.resolve(entry);
-        }
-      });
-  }
-
-  /**
-   * Look up Steam's executable path and launch arguments for
-   *  the game we're attempting to start-up.
-   * @param gamePath - Used to identify the game's cache entry and retrieve the
-   *  corresponding appId.
-   * @param appId - the application id, may be left undefined if the caller doesn't know
-   * @param args - Can be used to add additional launch arguments.
-   */
-  public getGameExecutionInfo(gamePath: string,
-                              appId?: number,
-                              args?: string[]): Promise<ISteamExec> {
-    return this.allGames()
-      .then(entries => {
-        // TODO: This is not a reliable way of finding a game in this list,
-        //   it will fail on junction points
-        //   or multiple mount points for the same disk, it will also get confused by something like
-        //   steamapps/common/../common/gamename
-        const found = entries.find(entry => {
-          const steamPath = entry.gamePath.toLowerCase();
-          const discoveryPath = gamePath.toLowerCase();
-          return discoveryPath.indexOf(steamPath) !== -1;
-        });
-        if (found !== undefined) {
-          appId = parseInt(found.appid, 10);
-        } else {
-          log('warn', 'game not listed in steam manifest', {
-            gamePath,
-            entries: entries.map(iter => iter.gamePath),
-          });
-        }
-        if (appId === undefined) {
-          return Promise.reject(
-            new GamePathNotMatched(gamePath, entries.map(entry => entry.gamePath)));
-        }
-
-        return this.mBaseFolder.then((basePath: string) => {
-          const steamExec: ISteamExec = {
-            steamPath: basePath + '\\Steam.exe',
-            arguments: args !== undefined
-              ? ['-applaunch', appId.toString(), ...args]
-              : ['-applaunch', appId.toString()],
-          };
-          return Promise.resolve(steamExec);
-        });
-      });
-  }
-
-  /**
-   * find the first game with the specified appid or one of the specified appids
-   */
-  public findByAppId(appId: string | string[]): Promise<ISteamEntry> {
-    // support searching for one app id or one out of a list (when there are multiple
-    // variants of a game)
-    const matcher = Array.isArray(appId)
-      ? entry => appId.indexOf(entry.appid) !== -1
-      : entry => entry.appid === appId;
-
-    return this.allGames()
-      .then(entries => entries.find(matcher))
-      .then(entry => {
-        if (entry === undefined) {
-          return Promise.reject(new GameNotFound(Array.isArray(appId) ? appId.join(', ') : appId));
-        } else {
-          return Promise.resolve(entry);
-        }
-      });
-  }
-
-  public allGames(): Promise<ISteamEntry[]> {
-    if (this.mCache === undefined) {
-      this.mCache = this.parseManifests();
-    }
-    return this.mCache;
-  }
-
-  private parseManifests(): Promise<ISteamEntry[]> {
-    const steamPaths: string[] = [];
-    return this.mBaseFolder
-      .then((basePath: string) => {
-        if (basePath === undefined) {
-          return Promise.resolve(undefined);
-        }
-        steamPaths.push(basePath);
-        return fs.readFileAsync(path.resolve(basePath, 'config', 'config.vdf'));
-      })
-      .then((data: Buffer) => {
-        if (data === undefined) {
-          return Promise.resolve([]);
-        }
-
-        let configObj;
-        try {
-          configObj = parse(data.toString());
-        } catch (err) {
-          return Promise.resolve([]);
-        }
-
-        let counter = 1;
-        const steamObj: any =
-          getSafeCI(configObj, ['InstallConfigStore', 'Software', 'Valve', 'Steam'], {});
-        while (steamObj.hasOwnProperty(`BaseInstallFolder_${counter}`)) {
-          steamPaths.push(steamObj[`BaseInstallFolder_${counter}`]);
-          ++counter;
-        }
-
-        return Promise.all(Promise.map(steamPaths, steamPath => {
-          const steamAppsPath = path.join(steamPath, 'steamapps');
-          return fs.readdirAsync(steamAppsPath)
-            .then(names => {
-              const filtered = names.filter(name =>
-                name.startsWith('appmanifest_') && (path.extname(name) === '.acf'));
-              return Promise.map(filtered, (name: string) =>
-                fs.readFileAsync(path.join(steamAppsPath, name)));
-            })
-            .then((appsData: Buffer[]) => {
-              return appsData.map(appData => parse(appData.toString())).map(obj =>
-                ({
-                  appid: obj['AppState']['appid'],
-                  name: obj['AppState']['name'],
-                  gamePath: path.join(steamAppsPath, 'common', obj['AppState']['installdir']),
-                  lastUser: obj['AppState']['LastOwner'],
-                  lastUpdated: new Date(obj['AppState']['LastUpdated'] * 1000),
-                }));
-            })
-            .catch({ code: 'ENOENT' }, (err: any) => {
-              // no biggy, this can happen for example if the steam library is on a removable medium
-              // which is currently removed
-              log('info', 'Steam library not found', err.code);
-            })
-            .catch(err => {
-              log('warn', 'Failed to read steam library', err.message);
-            });
-        }));
-      })
-      .then((games: ISteamEntry[][]) =>
-        games.reduce((prev: ISteamEntry[], current: ISteamEntry[]): ISteamEntry[] =>
-          current !== undefined ? prev.concat(current) : prev, []));
-  }
-}
-
-const instance: ISteam = new Steam();
-
-export default instance;
+export default {
+  findByName(namePattern: string): Promise<ISteamEntry> {
+    return Promise.reject(new GameNotFound(namePattern));
+  },
+  findByAppId(appId: string | string[]): Promise<ISteamEntry> {
+    return Promise.reject(new GameNotFound(''));
+  },
+  allGames(): Promise<ISteamEntry[]> {
+    return Promise.resolve([]);
+  },
+  getGameExecutionInfo(gamePath: string, appId?: number, args?: string[]): Promise<ISteamExec> {
+    return Promise.reject(new GameNotFound(gamePath));
+  },
+};
