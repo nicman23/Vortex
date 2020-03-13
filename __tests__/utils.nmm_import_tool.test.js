@@ -40,7 +40,7 @@ describe('parseModEntries', () => {
       modFilename: 'TestMod',
       archivePath: '',
       modVersion: '1.0.0',
-      archiveMD5: 'd41d8cd98f00b204e9800998ecf8427e',
+      archiveMD5: 'fake hash',
       importFlag: true,
       isAlreadyManaged: false,
     });
