@@ -187,7 +187,7 @@ function unknownErrorRetry(filePath: string, err: Error, stackErr: Error): Promi
                       + 'temporary network or server problems. '
                       + 'Please do not report this to us, this is not a bug in Vortex '
                       + 'and we can not provide remote assistance with hardware problems.';
-    } else if ([1336].includes(err['nativeCode'])) {
+    } else if ([1336, 1337].includes(err['nativeCode'])) {
       options.title = `I/O Error (${err['nativeCode']})`;
       options.message = `Accessing "${filePath}" failed with an error that indicates `
                       + 'file system corruption. If this isn\'t a temporary problem '
