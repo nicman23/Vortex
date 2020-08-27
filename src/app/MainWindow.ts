@@ -262,6 +262,7 @@ class MainWindow {
         nodeIntegrationInWorker: true,
         webviewTag: true,
         enableWebSQL: false,
+        enableRemoteModule: true,
       },
     };
   }

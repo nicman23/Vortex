@@ -144,6 +144,7 @@ let deinitCrashDump: () => void;
 
 if (process.env.CRASH_REPORTING === 'electron') {
   // tslint:disable-next-line:no-var-requires
+  /*
   const crashReporter: typeof crashReporterT = require('electron').crashReporter;
   crashReporter.start({
     productName: 'Vortex',
@@ -152,6 +153,7 @@ if (process.env.CRASH_REPORTING === 'electron') {
     submitURL: '',
     crashesDirectory: path.join(tempPath, 'dumps'),
   });
+  */
 } else if (process.env.CRASH_REPORTING === 'vortex') {
   // tslint:disable-next-line:no-var-requires
   const crashDump: typeof crashDumpT = require('crash-dump').default;

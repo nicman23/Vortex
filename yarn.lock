@@ -7718,10 +7718,10 @@ electron-updater@^4.2.0:
     pako "^1.0.10"
     semver "^6.3.0"
 
-electron@~8.4.1:
-  version "8.4.1"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-8.4.1.tgz#124d6c65d02a644b389f498d549f2411a0a94c27"
-  integrity sha512-2UK0dUlkwoUAxRDS9VHm3M/zKW+Vm71b1mqSfHx+L7VEfTjiO1Vt2l+kGFg0sUpa/CVMtSCqaeZucrNN6VQwwA==
+electron@~10.0.0:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-10.0.0.tgz#4e777612ead76b39bc7241c7749bf6b0ece47889"
+  integrity sha512-0XX/LqYAHHCSbfLjUk9VRDPOeYjDPEzA9i7F50AqpEpFIWR2bp++0S0beRANUpPdkvtBDp+0R6vHV3iXPvuKyA==
   dependencies:
     "@electron/get" "^1.0.1"
     "@types/node" "^12.0.12"
