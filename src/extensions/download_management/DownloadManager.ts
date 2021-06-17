@@ -750,13 +750,22 @@ class DownloadManager {
       }
     });
 
-    // stop running workers
-    download.chunks.forEach((chunk: IDownloadJob) => {
-      if ((chunk.state === 'running')
-          && (this.mBusyWorkers[chunk.workerId] !== undefined)) {
-        this.mBusyWorkers[chunk.workerId].cancel();
-      }
-    });
+    if (download.chunks.find(chunk => chunk.state !== 'finished') !== undefined) {
+      // stop running workers
+      download.chunks.forEach((chunk: IDownloadJob) => {
+        if ((chunk.state === 'running')
+            && (this.mBusyWorkers[chunk.workerId] !== undefined)) {
+          this.mBusyWorkers[chunk.workerId].cancel();
+        }
+      });
+    } else {
+      // None of the chunks have ever started downloading; this is valid if
+      //  the user had queued this download and it never started off.
+      //  In this case we can cancel the download directly as there are no
+      //  running workers!
+      download.failedCB(new UserCanceled());
+    }
+
     // remove from queue
     this.mQueue = this.mQueue.filter(
       (value: IRunningDownload) => value.id !== id);
