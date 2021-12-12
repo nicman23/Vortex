@@ -43,6 +43,18 @@ const IPC_ID = 'vortex_elevate_symlink';
 
 const app = appIn || remote.app;
 
+function isWine() {
+  if (process.platform !== 'win32') {
+    return false;
+  }
+  try {
+    const winapi = require('winapi-bindings');
+    return winapi.IsThisWine();
+  } catch (err) {
+    return false;
+  }
+}
+
 function monitorConsent(onDisappeared: () => void): () => void {
   if (process.platform !== 'win32') {
     // on non-windows platforms we don't need to do any of this.
@@ -765,17 +777,21 @@ function ensureTaskEnabled(api: IExtensionApi, delayed: boolean) {
 }
 
 function tasksSupported() {
-  try {
-    winapi.GetTasks();
-    return null;
-  } catch (err) {
-    log('info', 'windows tasks api failed', err.message);
-    return err.message;
+  if (! isWine()) {
+    try {
+      winapi.GetTasks();
+      return null;
+    } catch (err) {
+      log('info', 'windows tasks api failed', err.message);
+      return err.message;
+    }
+  } else {
+    return "wine error dummy";
   }
 }
 
 function findTask() {
-  if (process.platform !== 'win32') {
+  if (process.platform !== 'win32' || isWine() ) {
     return undefined;
   }
   try {
