@@ -55,7 +55,7 @@ import * as path from 'path';
 
 import { addNotification, setupNotificationSuppression } from './actions/notifications';
 import reducer, { Decision } from './reducers/index';
-import { setOutdated, terminate, toError } from './util/errorHandling';
+import { setOutdated, terminate, toError, isWine } from './util/errorHandling';
 import ExtensionManager from './util/ExtensionManager';
 import { ExtensionContext } from './util/ExtensionProvider';
 import { setTFunction } from './util/fs';
@@ -454,7 +454,7 @@ function init() {
       const protocol = url.split(':')[0];
 
       const handler = extensions.getProtocolHandler(protocol);
-      if (handler !== null) {
+      if (handler !== null || isWine) {
         log('info', 'handling url', { url });
         handler(url, install);
       } else {
