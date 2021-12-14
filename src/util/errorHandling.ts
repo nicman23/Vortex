@@ -151,7 +151,7 @@ export function setApiKey(key: string) {
   fallbackAPIKey = key;
 }
 
-function setOutdated(api: IExtensionApi) {
+export function setOutdated(api: IExtensionApi) {
   if (process.env.NODE_ENV === 'development') {
     return;
   }
