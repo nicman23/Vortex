@@ -101,6 +101,19 @@ import { bytesToString, getAllPropertyNames, replaceRecursive } from './util/uti
 
 log('debug', 'renderer process started', { pid: process.pid });
 
+function isWine() {
+  if (process.platform !== 'win32') {
+    return false;
+  }
+  try {
+    const winapi = require('winapi-bindings');
+    return winapi.IsThisWine();
+  } catch (err) {
+    return false;
+  }
+}
+
+
 function fetchReduxState(tries: number = 5) {
   // using implicit structured clone algorithm
   return ipcRenderer.sendSync('get-redux-state');

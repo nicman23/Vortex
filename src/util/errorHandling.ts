@@ -39,7 +39,7 @@ interface IErrorContext {
 
 const globalContext: IErrorContext = {};
 
-export function isWine() {
+function isWine() {
   if (process.platform !== 'win32') {
     return false;
   }
